@@ -3,7 +3,7 @@ import glob
 import json
 
 
-def merge_json_to_df(list_files):
+def merge_json_to_df(list_files, save = True):
     all_lcs = []
 
     # Filter mapping
@@ -37,7 +37,8 @@ def merge_json_to_df(list_files):
 
     # Convert to dataframe
     df = pd.DataFrame(all_lcs)
-    df.to_csv("merged_lightcurves.csv", index=False)
+    if save:
+        df.to_csv("merged_lightcurves.csv", index=False)
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
