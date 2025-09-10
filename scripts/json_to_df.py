@@ -1,6 +1,7 @@
 import pandas as pd
 import glob
 import json
+import argparse
 
 
 def merge_json_to_df(list_files, save = True):
@@ -39,7 +40,9 @@ def merge_json_to_df(list_files, save = True):
     df = pd.DataFrame(all_lcs)
     if save:
         df.to_csv("merged_lightcurves.csv", index=False)
-
+    else:
+        return df
+    
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--folder", type=str, required=True, help="Folder containing JSON")
