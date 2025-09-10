@@ -48,7 +48,7 @@ if __name__ == "__main__":
     argparser.add_argument("--folder", type=str, required=True, help="Folder containing JSON")
     args = argparser.parse_args()
     folder = args.folder
-    #folder = "/media3/CRP8/TDE/data/DR_photometry_full/extragalactic"
+    folder = "/media3/CRP8/TDE/data/DR_photometry_full/extragalactic"
 
     list_files = glob.glob(f"{folder}/*.json")
 
