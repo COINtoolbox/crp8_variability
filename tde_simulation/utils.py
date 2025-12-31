@@ -19,7 +19,7 @@ def redshift_to_cm(z: float) -> float:
     return cosmo.comoving_distance(z).to(u.cm).value
 
 
-def mag_to_flux(mag):
+def mag_to_flux(mag) -> np.ndarray:
     """Convert AB Magnitude to flux in milliJansky"""
     return np.power(10, (26 - (mag + 48.6) / 2.5))
 
@@ -39,7 +39,7 @@ def luminosity_to_flux_mjy(luminosity: np.ndarray,
     return flux / 1e-26
 
 
-def flux_to_mag(flux):
+def flux_to_mag(flux) -> np.ndarray:
     """Convert flux from milliJansky to AB Magnitude."""
     f_cgs = flux * 1e-3 * 1e-23  # mJy → Jy → erg/s/cm²/Hz
     mag = -2.5 * np.log10(f_cgs) - 48.6
@@ -52,7 +52,7 @@ def load_config(path: str) -> Dict[str, Any]:
         return json.load(f)
 
 
-def preprocess_light_curve(df):
+def preprocess_light_curve(df) -> pd.DataFrame:
     """Sort and reset index for a single OID+Filter light curve"""
     return df.sort_values(by="mjd").reset_index(drop=True)
 
@@ -75,7 +75,7 @@ def sample_star_rstar(cfg: Dict[str, Any]) -> Union[float, int]:
         raise ValueError(f"Invalid star_rstar mode: {mode}")
 
 
-def sample_tide_configs(config):
+def sample_tide_configs(config) -> Dict:
     """Samples TiDE configs from the parameter space defined in config"""
     bh_mass: float = np.random.uniform(config["bh_mass"]["min"],
                                        config["bh_mass"]["max"])
@@ -89,7 +89,7 @@ def sample_tide_configs(config):
             "use_pnu": use_pnu}
 
 
-def plot_light_curves_combined(df, config, tide_config):
+def plot_light_curves_combined(df, config, tide_config) -> None:
     """Plot original vs simulated ZTF mag in separate subplots"""
     _, axes = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
     output_file = os.path.join(config["output_dir"],
@@ -156,7 +156,7 @@ def plot_light_curves_combined(df, config, tide_config):
     plt.savefig(output_file)
 
 
-def simulate_flux_with_tide(real_df, tide_df, start_mjd):
+def simulate_flux_with_tide(real_df, tide_df, start_mjd) -> pd.DataFrame:
     """Simulates light curve by injecting synthetic
      flux into observed light curve"""
     if len(real_df) < 2:

@@ -121,6 +121,7 @@ def save_output(combined_df: pd.DataFrame, config: Dict[str, Any],
     ) as f:
         json.dump(tide_config, f, indent=4)
 
+
 def main(config_path: str) -> None:
     """Main function to run the TDE light curve simulation."""
     config = load_config(config_path)

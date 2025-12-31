@@ -1,6 +1,6 @@
 ## Simulation of IMBH caused TDEs in ZTF lightcurves
 
-The pipeline simulates ZTF observation photometry lightcurves by mapping theoretical simulations generated with TiDE ([Kovács-Stermeczky & Vinkó (2023) ](https://ui.adsabs.harvard.edu/abs/2023PASP..135c4102K/abstract)) into real observation.
+The pipeline simulates ZTF observation photometry lightcurves by mapping theoretical simulations generated with TiDE ( [Kovács-Stermeczky & Vinkó (2023) ](https://ui.adsabs.harvard.edu/abs/2023PASP..135c4102K/abstract)) into real observation.
 
 
 
@@ -35,19 +35,16 @@ The example configuration with default parameters is available in `config.json`
 #### TiDE related configs
 - **bh_mass**:  
   Black hole masses (in M☉)  range to sample for simulations.  
-  *Fields:*  
   - `min`: minimum black hole mass (`1e2`)  
   - `max`: maximum black hole mass (`1e6`)  
 
 - **star_mstar**:  
   stellar masses (in M☉) for disrupted stars.  
-  *Fields:*  
   - `min`: minimum stellar mass (`0.1`)  
   - `max`: maximum stellar mass (`30`)  
 
 - **star_rstar**:  
   Stellar radius distribution settings (categorical, continuous or mixed)
-  *Fields:*  
   - `categorical`: stellar types to include (`["ms", "wd"]` = main sequence and white dwarfs)  
   - `continuous`: range of stellar radii in solar radii (`min: 0.1, max: 10.0`)
   - `mixed`: Can sample from categorical and continuous
