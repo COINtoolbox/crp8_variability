@@ -1,6 +1,6 @@
 {
-  "ztf_files_path": "/example/input/*.csv",
-  "tide_path": "/Users/rupesh/PycharmProjects/pythonProject3/tide_installation/",
+  "ztf_files_path": "example/input/*.csv",
+  "tide_path": "/path/to/tide_installation/",
   "output_dir": "example/output",
   "bh_mass": {
     "min": 1e2,
