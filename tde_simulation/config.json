@@ -1,0 +1,27 @@
+{
+  "ztf_files_path": "/example/input/*.csv",
+  "tide_path": "/Users/rupesh/PycharmProjects/pythonProject3/tide_installation/",
+  "output_dir": "example/output",
+  "bh_mass": {
+    "min": 1e2,
+    "max": 1e6
+  },
+
+  "star_mstar": {
+    "min": 0.1,
+    "max": 30
+  },
+
+  "star_rstar": {
+    "mode": "mixed",
+    "categorical": ["ms", "wd"],
+    "continuous": {
+      "min": 0.1,
+      "max": 10.0
+    }
+  },
+  "use_p_nu_scaling": [true],
+  "distance_mpc": 100,
+  "save_plots": true,
+  "filters": ["zg", "zr"]
+}
