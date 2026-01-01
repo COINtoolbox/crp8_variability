@@ -1,0 +1,7 @@
+{
+  "data_dir": "/data",
+  "config_dir": "config",
+  "fink_filters_path": "/path/to/fink-filters",
+  "flare_rise_days": 30,
+  "distnr": 0.5
+}
