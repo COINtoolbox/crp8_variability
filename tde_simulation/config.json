@@ -1,5 +1,6 @@
 {
-  "ztf_files_path": "example/input/*.csv",
+  "ztf_files_path": "example/input/*csv",
+  "search_radius_arcsec": 1.2,
   "tide_path": "/path/to/tide_installation/",
   "output_dir": "example/output",
   "bh_mass": {
@@ -11,6 +12,7 @@
     "min": 0.1,
     "max": 30
   },
+  "coordinates_file": "example/extragalactic_coordinates.csv",
 
   "star_rstar": {
     "mode": "mixed",

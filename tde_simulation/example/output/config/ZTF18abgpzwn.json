@@ -1,7 +1,7 @@
 {
-    "bh_mass": 936929.0894859618,
-    "star_mstar": 21.973405884032335,
-    "star_rstar": 9.77,
+    "bh_mass": 616907.3927914185,
+    "star_mstar": 17.405524731143736,
+    "star_rstar": 6.87,
     "use_pnu": true,
-    "start_mjd": 59232.1191782
+    "start_mjd": 59422.450706
 }

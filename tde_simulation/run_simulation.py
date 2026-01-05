@@ -4,6 +4,9 @@ import argparse
 import glob
 import json
 import os
+from io import StringIO
+
+import requests
 from typing import Optional, Dict, Any
 
 import numpy as np
@@ -20,6 +23,7 @@ from utils import (
     redshift_to_cm,
     mpc_to_cm,
     luminosity_to_flux_mjy,
+    fetch_ztf_data_by_coordinates
 )
 
 ZTF_NOMINAL_FREQUENCY_MAPPING = {
@@ -122,46 +126,61 @@ def save_output(combined_df: pd.DataFrame, config: Dict[str, Any],
         json.dump(tide_config, f, indent=4)
 
 
+def process_single_object(ztf_data: pd.DataFrame, object_id: str, config: Dict[str, Any]) -> None:
+    ztf_data["flux"] = mag_to_flux(ztf_data["mag"])
+    ztf_data = preprocess_light_curve(ztf_data)
+
+    tide_config = sample_tide_configs(config)
+    start_mjd = np.random.choice(ztf_data["mjd"].values)
+    tide_config.update({"start_mjd": start_mjd})
+    config["file_name"] = object_id
+
+    all_band_data = []
+    for band_filter in config.get("filters", []):
+        band_data = ztf_data[ztf_data["filtercode"] == band_filter].copy()
+        if band_data.empty:
+            continue
+
+        band_data = band_data.sort_values("mjd").reset_index(drop=True)
+        simulated_data = simulate_data(band_data, config, tide_config, band_filter)
+
+        if not simulated_data.empty:
+            all_band_data.append(simulated_data)
+
+    if all_band_data:
+        output_df = pd.concat(all_band_data)
+        save_output(output_df, config, tide_config, object_id)
+
+
 def main(config_path: str) -> None:
-    """Main function to run the TDE light curve simulation."""
     config = load_config(config_path)
 
-    tide_path: Optional[str] = config.get("tide_path")
+    tide_path = config.get("tide_path")
     if not tide_path:
         raise ValueError("Missing 'tide_path' in config")
 
     os.environ["TIDE_PATH"] = tide_path
     print(f"[INFO] TIDE_PATH set to: {tide_path}")
-
     create_output_dirs(config)
-    ztf_files_list = glob.glob(config["ztf_files_path"])
 
-    for each_file in ztf_files_list:
-        file_name = os.path.basename(each_file).replace(".csv", "")
-        ztf_data = pd.read_csv(each_file)
-        ztf_data["flux"] = mag_to_flux(ztf_data["mag"])
+    if "coordinates_file" in config:
+        coordinates_df = pd.read_csv(config["coordinates_file"])
+        search_radius_deg = config["search_radius_arcsec"] / 3600
 
-        tide_config = sample_tide_configs(config)
-        ztf_data = preprocess_light_curve(ztf_data)
+        for _, row in coordinates_df.iterrows():
+            obj_id = str(row["objectId"])
+            try:
+                raw_data = fetch_ztf_data_by_coordinates(row["ra"], row["dec"], search_radius_deg)
+                ztf_df = pd.read_csv(StringIO(raw_data))
+                process_single_object(ztf_df, obj_id, config)
+            except Exception as e:
+                print(f"[ERROR] Failed to fetch/process data for {obj_id}: {e}")
 
-        config["file_name"] = file_name
-        start_mjd = np.random.choice(ztf_data["mjd"].values)
-        tide_config.update({"start_mjd": start_mjd})
-
-        all_band_data = []
-        for band_filter in config["filters"]:
-            band_data = ztf_data[ztf_data["filtercode"] == band_filter].copy()
-            band_data = band_data.sort_values("mjd").reset_index(drop=True)
-
-            simulated_data = simulate_data(
-                band_data, config, tide_config, band_filter
-            )
-            if not simulated_data.empty:
-                all_band_data.append(simulated_data)
-
-        if all_band_data:
-            all_band_data = pd.concat(all_band_data)
-            save_output(all_band_data, config, tide_config, file_name)
+    elif "ztf_files_path" in config:
+        for file_path in glob.glob(config["ztf_files_path"]):
+            obj_id = os.path.splitext(os.path.basename(file_path))[0]
+            ztf_df = pd.read_csv(file_path)
+            process_single_object(ztf_df, obj_id, config)
 
 
 if __name__ == "__main__":

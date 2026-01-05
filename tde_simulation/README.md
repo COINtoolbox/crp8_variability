@@ -16,8 +16,17 @@ python run_simulation.py --config config.json
 
 The example configuration with default parameters is available in `config.json`
 - **ztf_files_path**:  
- Path to ZTF data release photometry downloaded from IRSA. Check the example input format in the data folder.
-  *Example:* `/path/to/data/*.csv`
+ Either this or the `coordinates_file` Path to ZTF data release photometry downloaded from IRSA.
+  *Example:* `example/input/*.csv`
+
+- **coordinates_file**:  
+   The CSV file containing columns for objectId, ra, and dec in degrees.
+   The pipeline will query data from IRSA and generate simulations
+  *Example:* `example/extragalactic_coordinates.csv`
+
+-  **search_radius_arcsec**:  
+  The search radius specified in arcsec to query data in IRSA
+  *default:* 1.2"
 
 - **tide_path**:  
   Path to TiDE installation directory.  

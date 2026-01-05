@@ -5,6 +5,7 @@
 import json
 import os
 import random
+import requests
 from typing import Optional, Dict, Any, Union
 
 from astropy.cosmology import Planck18 as cosmo
@@ -187,3 +188,23 @@ def simulate_flux_with_tide(real_df, tide_df, start_mjd) -> pd.DataFrame:
     real_df["simulated_mag"] = flux_to_mag(real_df["simulated_flux"])
     real_df["original_mag"] = flux_to_mag(real_df["flux"])
     return real_df
+
+
+def fetch_ztf_data_by_coordinates(ra, dec, radius_deg, output_format='CSV'):
+    "Fetcjes ZTF DR photometry data from IRSSA"
+    # Base URL
+    url = "http://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves"
+
+    # Params to be passed
+    params = {
+        "POS": f"CIRCLE {ra} {dec} {radius_deg:.6f}",
+        "FORMAT": output_format.upper()
+    }
+
+    # Perform GET request
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200 and response.text.strip():
+        return response.text
+    else:
+        return None
