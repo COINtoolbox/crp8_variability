@@ -1,12 +1,13 @@
 """
     Utils
 """
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-
+import sys
 from fink_filters.ztf.filter_early_tde_candidates.prefilter import mag2fluxcal
 from fink_filters.ztf.filter_early_tde_candidates import lcs
 
@@ -88,14 +89,14 @@ def preprocess_and_extract_features(
     df = df.copy()
 
     df["FLUXCAL"], df["FLUXCALERR"] = mag2fluxcal(
-        df["simulated_mag"], df["magerr"]
+        df["simulated_mag"], df["i:sigmapsf"]
     )
-    df["FLUXCALUPPER"] = 10 ** (11 - 0.4 * df["limitmag"])
+    df["FLUXCALUPPER"] = 10 ** (11 - 0.4 * df["i:diffmaglim"])
 
     df["i:fid"] = df["i:fid"].map(BAND_FILTER_MAPPING)
     df = df.sort_values("i:jd").reset_index(drop=True)
 
-    lcs.deredden_pdf(df, np.nanmean(df["ra"]), np.nanmean(df["dec"]))
+    lcs.deredden_pdf(df, np.nanmean(df["i:ra"]), np.nanmean(df["i:dec"]))
 
     jd_max = df["i:jd"].max()
     jd_min = jd_max - sampling_window
@@ -220,5 +221,4 @@ def run_classifier(
 
         if not best_score and frac_score < 0.1:
             results["valid"] = False
-
     return results

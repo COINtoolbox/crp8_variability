@@ -4,10 +4,12 @@
 
 
 import json
+import os.path
 from pathlib import Path
 
 import pandas as pd
 from tqdm import tqdm
+import sys
 
 from tde_classifiers_evaluation.utils import (
     preprocess_and_extract_features,
@@ -59,23 +61,25 @@ def process_object(
     display_sampled_lc: bool = False
 ):
     object_id = csv_path.stem
-    df, object_config = load_data(csv_path, config_dir)
-
+    try:
+        df, object_config = load_data(csv_path, config_dir)
+    except:
+        return "missing_config"
     if not has_required_filters(df):
-        return None
+        return "not_required_filters"
 
     df = prepare_light_curve(df, object_config, flare_rise_days)
 
     features_data, sampled_lc = preprocess_and_extract_features(df)
     if features_data is None:
-        return None
+        return "feature_extraction_failed"
     if display_sampled_lc:
         plot_light_curves(sampled_lc, object_id)
 
     features_data = update_features(features_data, df, distnr)
 
     if not check_features_quality(features_data):
-        return None
+        return "feature_quality_failed"
     return run_classifier(features_data, classifiers, object_id)
 
 
@@ -102,12 +106,19 @@ def main():
             flare_rise_days,
             object_distnr
         )
-        if result is not None:
+        if isinstance(result, str):
+            object_id = os.path.basename(csv_path).replace(".csv", "")
+            results.append(
+                {"objectId":object_id,
+                 "best_score": [None],
+                 "frac_scores": [None],
+                 "valid": result})
+        else:
             results.append(result)
-
+        print(result)
     if results:
         pd.DataFrame(results).to_csv(
-            "classification_results2.csv",
+            "classification_results.csv",
             index=False,
         )
 

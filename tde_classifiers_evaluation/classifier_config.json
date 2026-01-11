@@ -1,7 +1,7 @@
 {
-  "data_dir": "/data",
-  "config_dir": "config",
-  "fink_filters_path": "/path/to/fink-filters",
-  "flare_rise_days": 30,
-  "distnr": 0.5
+  "data_dir": "alerts_simulated/data",
+  "config_dir": "alerts_simulated/config",
+  "fink_filters_path": "/Users/rupesh/PycharmProjects/tde_paper/fink-filters",
+  "flare_rise_days": 100,
+  "distnr": 0.25
 }
