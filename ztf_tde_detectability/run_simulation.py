@@ -20,7 +20,8 @@ from utils import (
     compute_snr,
     is_trigger_alert,
     plot_combined_mags_per_distance,
-    simulate_flux_with_tide,
+    simulate_flux_with_tide, distance_to_z,
+    redraw_at_distance,
 )
 
 
@@ -29,45 +30,64 @@ BAND_MAPPING = {"zg": 1, "zr": 2}
 SIMULATION_BAND_MAPPING = {"zg": "flux_mjy_g", "zr": "flux_mjy_r"}
 OUTPUT_DIR = "/media3/rupesh/crp8/data/legus_photometry/snad_simulation_fixed_final_100mpc"
 DISTANCES_TO_TRANSFORM = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
 ORIGINAL_DISTANCE = 9.5
-SAVE_PLOTS = False
+SAVE_PLOTS = True
 
 
 def _compute_distance_variant(
-    base_mag: np.ndarray,
-    base_err: np.ndarray,
+    injected_flux: np.ndarray,
+    flux_err: np.ndarray,
     d_new: float,
     reference_mag: float,
     reference_mag_err: float,
     mjd: Union[pd.Series, np.ndarray],
     start_mjd: float,
-) -> Dict[str, Union[np.ndarray, np.ndarray]]:
-    if d_new != ORIGINAL_DISTANCE:
-        mag: np.ndarray = shift_magnitude_to_distance(base_mag, ORIGINAL_DISTANCE, d_new)
-        err: np.ndarray = base_err * (d_new / ORIGINAL_DISTANCE)
-    else:
-        mag = base_mag
-        err = base_err
+) -> Dict[str, np.ndarray]:
 
-    diff_data: np.ndarray = np.array([
-        dc_to_difference_mag(m, me, reference_mag, reference_mag_err)
+    mag, err = redraw_at_distance(injected_flux, flux_err, ORIGINAL_DISTANCE, d_new)
+
+    reference_mag_shifted = reference_mag
+    reference_mag_err_scaled = reference_mag_err
+    if d_new != ORIGINAL_DISTANCE:
+        reference_mag_shifted = shift_magnitude_to_distance(
+            reference_mag,
+            ORIGINAL_DISTANCE,
+            d_new
+        )
+        reference_mag_err_scaled = reference_mag_err * (d_new / ORIGINAL_DISTANCE) ** 2
+
+    if d_new != ORIGINAL_DISTANCE:
+        z_old = distance_to_z(ORIGINAL_DISTANCE)
+        z_new = distance_to_z(d_new)
+
+        mjd = np.asarray(mjd, dtype=float)
+
+        t_rest = mjd - start_mjd
+
+        scale = (1 + z_new) / (1 + z_old)
+        mjd = t_rest * scale + start_mjd
+
+    diff_data = np.array([
+        dc_to_difference_mag(m, me, reference_mag_shifted, reference_mag_err_scaled)
         for m, me in zip(mag, err)
     ])
 
     magpsf, sigmapsf, idp = diff_data.T
-    snr: np.ndarray = compute_snr(sigmapsf)
+    snr = compute_snr(sigmapsf)
 
     return {
         "simulated_mag": mag,
         "simulated_mag_error": err,
-        "is_dimmer": (mag > reference_mag),
+        "simulated_mjd": mjd,
+        "is_dimmer": mag > reference_mag_shifted,
         "magpsf": magpsf,
         "sigmapsf": sigmapsf,
         "idp": idp,
         "snr": snr,
         "is_alert": is_trigger_alert(snr, idp, mjd, start_mjd),
+        "reference_mag": reference_mag_shifted,
     }
-
 
 def process_distance_block(
     sim_base: pd.DataFrame,
@@ -77,15 +97,15 @@ def process_distance_block(
 ) -> pd.DataFrame:
     results: pd.DataFrame = sim_base[['mjd', "mag", "magerr"]].copy()
 
-    base_mag: np.ndarray = sim_base["simulated_mag"].to_numpy(dtype=float)
-    base_err: np.ndarray = sim_base["simulated_mag_error"].to_numpy(dtype=float)
+    injected_flux: np.ndarray = sim_base["injected_flux"].to_numpy(dtype=float)
+    flux_err: np.ndarray = sim_base["flux_err"].to_numpy(dtype=float)
     mjd: pd.Series = results["mjd"]
 
     for d in [ORIGINAL_DISTANCE, *DISTANCES_TO_TRANSFORM]:
         suffix: str = distance_suffix(d)
 
         computed = _compute_distance_variant(
-            base_mag, base_err, d,
+            injected_flux, flux_err, d,
             reference_mag, reference_mag_err,
             mjd, start_mjd
         )
@@ -198,14 +218,14 @@ def run_pipeline(sim_file: str) -> None:
             plot_combined_mags_per_distance(
                 sim_results,
                 dr_file,
-                magnr_dict=ref_mag_dict,
                 bh_mass=bh_mass / 1e6,
                 output_dir=os.path.join(OUTPUT_DIR, "plots", sim_fname),
             )
 
 
 if __name__ == '__main__':
-    SIMULATION_FILES_LIST = glob.glob("/media3/rupesh/crp8/code/simulation_runs/crp8_variability/tde_simulation/ngc_9_5mpc_tide_lcs/*.csv")
+    SIMULATION_FILES_LIST = glob.glob(
+        "/media3/rupesh/crp8/code/simulation_runs/crp8_variability/tde_simulation/ngc_9_5mpc_tide_lcs/*.csv")
 
-    with Pool() as pool:
+    with Pool(processes=1) as pool:
         pool.map(run_pipeline, SIMULATION_FILES_LIST)
