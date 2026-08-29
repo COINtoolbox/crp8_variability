@@ -1,3 +1,7 @@
+"""
+    Simulation utils
+"""
+
 import os
 import json
 from typing import Any, Dict, List, Tuple, Union
@@ -12,11 +16,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-ZTF_MAG_LIMIT: float = 23.7
+ZTF_MAG_LIMIT: float = 23.5
 SIGMA_THRESH: float = 5.0
 LOG10_FACTOR: float = 1.0857  # 2.5 / ln(10)
 MIN_FLUX: float = 1e-12
-PLOT_SIGMA_MAX: float = 0.75  # hide error bars above this σ_mag when plotting
+PLOT_SIGMA_MAX: float = 0.75
 
 FILTER_COLORS: Dict[str, str] = {
     "zg": "#141E3C",

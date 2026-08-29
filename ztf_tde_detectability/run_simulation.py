@@ -1,3 +1,6 @@
+""""
+    Simulation run script
+"""
 
 import os
 import glob
@@ -28,11 +31,11 @@ from utils import (
 DR_FILES_LIST = glob.glob("/media3/rupesh/crp8/data/legus_photometry/snad/*.json")
 BAND_MAPPING = {"zg": 1, "zr": 2}
 SIMULATION_BAND_MAPPING = {"zg": "flux_mjy_g", "zr": "flux_mjy_r"}
-OUTPUT_DIR = "/media3/rupesh/crp8/data/legus_photometry/snad_simulation_fixed_final_100mpc"
+OUTPUT_DIR = "/media3/rupesh/crp8/data/detectability_simulations/tide_diffused"
 DISTANCES_TO_TRANSFORM = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
 ORIGINAL_DISTANCE = 9.5
-SAVE_PLOTS = True
+SAVE_PLOTS = False
 
 
 def _compute_distance_variant(
@@ -115,6 +118,36 @@ def process_distance_block(
 
     return results
 
+
+def process_distance_block(
+    sim_base: pd.DataFrame,
+    reference_mag: float,
+    reference_mag_err: float,
+    start_mjd: float,
+) -> pd.DataFrame:
+    base: pd.DataFrame = sim_base[['mjd', "mag", "magerr"]].copy()
+
+    injected_flux: np.ndarray = sim_base["injected_flux"].to_numpy(dtype=float)
+    flux_err: np.ndarray = sim_base["flux_err"].to_numpy(dtype=float)
+    mjd: pd.Series = base["mjd"]
+
+    columns: Dict[str, np.ndarray] = {}
+    for d in [ORIGINAL_DISTANCE, *DISTANCES_TO_TRANSFORM]:
+        suffix: str = distance_suffix(d)
+
+        computed = _compute_distance_variant(
+            injected_flux, flux_err, d,
+            reference_mag, reference_mag_err,
+            mjd, start_mjd
+        )
+
+        for key, value in computed.items():
+            columns[f"{key}{suffix}"] = value
+
+    return pd.concat(
+        [base, pd.DataFrame(columns, index=base.index)],
+        axis=1,
+    )
 
 def process_filter(
     dr_df: pd.DataFrame,
@@ -225,7 +258,7 @@ def run_pipeline(sim_file: str) -> None:
 
 if __name__ == '__main__':
     SIMULATION_FILES_LIST = glob.glob(
-        "/media3/rupesh/crp8/code/simulation_runs/crp8_variability/tde_simulation/ngc_9_5mpc_tide_lcs/*.csv")
+        "/media3/rupesh/crp8/code/ztf_tde_detectability/ngc_9_5mpc_tide_lcs_diffused/*.csv")
 
-    with Pool(processes=1) as pool:
+    with Pool() as pool:
         pool.map(run_pipeline, SIMULATION_FILES_LIST)
